@@ -4,23 +4,18 @@
 
 __global__ void mm_kernel(float* A, float* B, float* C, unsigned int M, unsigned int N, unsigned int K) {
 
-    // TODO
+    unsigned int row = blockIdx.y*blockDim.y + threadIdx.y;
+    unsigned int col = blockIdx.x*blockDim.x + threadIdx.x;
 
 
+    if (row < M && col < N) {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+        float sum = 0.0f;
+        for (unsigned int i = 0; i < K; ++i) {
+            sum += A[row*K + i]*B[i*N + col];
+        }
+        C[row*N + col] = sum;
+    }
 }
 
 void mm_gpu(float* A, float* B, float* C, unsigned int M, unsigned int N, unsigned int K) {
@@ -33,11 +28,10 @@ void mm_gpu(float* A, float* B, float* C, unsigned int M, unsigned int N, unsign
     // Allocate GPU memory
     cudaEventRecord(start);
 
-    // TODO
-
-
-
-
+    float* A_gpu, *B_gpu, *C_gpu;
+    cudaMalloc((void**)&A_gpu, M*K*sizeof(float));
+    cudaMalloc((void**)&B_gpu, K*N*sizeof(float));
+    cudaMalloc((void**)&C_gpu, M*N*sizeof(float));
 
 
     cudaEventRecord(stop);
@@ -48,11 +42,9 @@ void mm_gpu(float* A, float* B, float* C, unsigned int M, unsigned int N, unsign
     // Copy data to GPU
     cudaEventRecord(start);
 
-    // TODO
-
-
-
-
+    cudaMemcpy(A_gpu, A, M*K*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(B_gpu, B, K*N*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(C_gpu, C, M*N*sizeof(float), cudaMemcpyHostToDevice);
 
 
     cudaEventRecord(stop);
@@ -63,11 +55,10 @@ void mm_gpu(float* A, float* B, float* C, unsigned int M, unsigned int N, unsign
     // Call kernel
     cudaEventRecord(start);
 
-    // TODO
-
-
-
-
+    dim3 numThreadsperBlock(32, 32);
+    dim3 numBlocks((N+numThreadsperBlock.x-1)/numThreadsperBlock.x, (M+numThreadsperBlock.y-1)/numThreadsperBlock.y);
+    
+    mm_kernel<<< numBlocks, numThreadsperBlock >>> (A_gpu, B_gpu, C_gpu, M, N, K);
 
 
     cudaEventRecord(stop);
@@ -78,11 +69,7 @@ void mm_gpu(float* A, float* B, float* C, unsigned int M, unsigned int N, unsign
     // Copy data from GPU
     cudaEventRecord(start);
 
-    // TODO
-
-
-
-
+    cudaMemcpy(C, C_gpu, M*N*sizeof(float), cudaMemcpyDeviceToHost);
 
 
     cudaEventRecord(stop);
@@ -93,12 +80,9 @@ void mm_gpu(float* A, float* B, float* C, unsigned int M, unsigned int N, unsign
     // Free GPU memory
     cudaEventRecord(start);
 
-    // TODO
-
-
-
-
-
+    cudaFree(A_gpu);
+    cudaFree(B_gpu);
+    cudaFree(C_gpu);
 
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
