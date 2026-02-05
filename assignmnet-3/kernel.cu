@@ -22,9 +22,13 @@ __global__ void mm_tiled_kernel(float* A, float* B, float* C, unsigned int M, un
         // Load tiles to shared memory 
         if(row < M && tile*TILE_DIM + threadIdx.x < K) {
             A_s[threadIdx.y][threadIdx.x] = A[row*K + tile*TILE_DIM + threadIdx.x];
+        } else {
+            A_s[threadIdx.y][threadIdx.x] = 0.0f;
         }
         if(col < N && tile*TILE_DIM + threadIdx.y < K) {
-        B_s[threadIdx.y][threadIdx.x] = B[(tile*TILE_DIM + threadIdx.y)*K + col];
+            B_s[threadIdx.y][threadIdx.x] = B[(tile*TILE_DIM + threadIdx.y)*N + col];
+        } else {
+            B_s[threadIdx.y][threadIdx.x] = 0.0f;
         }
         // Threads wait for each other to finish loading before computing
         __syncthreads();
