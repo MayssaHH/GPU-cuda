@@ -7,24 +7,32 @@
     (a) The kernel implemented in the previous assignment (without shared memory
         tiling)
 
+    For each C[i][j] we have:
+    (1 mulitplictaion + 1 addition)*256 = 512 FLOPS
+    
+    For each C[i][j] we have:
+    - 256 loads from A
+    - 256 loads from B
+    - 1 store 
+    So we have (256 + 256 + 1 = 513 floats)*(4 bytes) = 2052 Bytes 
 
-
-
-
-
-
-
-
+    Ratio = 512 FLOPS / 2052 bytes = 0.2495 FLOPS/Bytes
+    
 
     (b) The kernel implemented in this assignment (with shared memory tiling)
 
+    For each 32x32 threadblock we have:
+    - 1024 outputs and each do 512 FLOPS so in total 524,288 FLOPS
+    - 256/32 = 8 tiles where for each tile we have:
+        - (32×32=1024 floats)*(4 Bytes) = 4,096 Bytes load from A 
+        - (32×32=1024 floats)*(4 Bytes) = 4,096 Bytes load from B 
+        which makes it 8,192 Bytes load for each tile 
+    therefore, we have 8*8,192 = 65,536 bytes load for each threadblock
+    - each tile stores its 32x32 output in 32*32*4 Bytes = 4,096 Bytes
 
+    So for each threadblock we have 65,536 + 4,096 = 69,632 Bytes 
 
-
-
-
-
-
+    Ratio = 524,288 FLOPS / 69,632 Bytes = 7.5294 FLOPS/Bytes
 
 
 (2) Assume that a block and tile size of 32x32 is used, and that the program runs
@@ -40,21 +48,42 @@
     Answer the following questions about occupancy for the kernel implemented
     in this assignment. Show your work.
 
+    note: i am using runpod - this is the GPU i used for this assignment
+
+    GPU: NVIDIA RTX A4500
+    Compute capability: 8.6
+    maxThreadsPerMultiProcessor: 1536
+    maxBlocksPerMultiProcessor:  16
+    sharedMemPerMultiprocessor:  102400 bytes (100.0 KB)
+    regsPerMultiprocessor:       65536
+
     (a) Is occupancy limited by the max blocks/SM?
+    Each block has 32*32 = 1,024 threads per block 
+    we need blocks/SM = (threads/SM) / (threads/blocks) = 1,536 / 1,024 = 1 blocks/SM
 
+    What we need is 1 blocks/SM way less than max blocks/SM which is 16
 
-
-
-
+    Answer: occupancy is not limited by max blocks/SM
 
     (b) Is occupancy limited by the max shared-memory/SM?
+    Shared memory per block is 2*32*32*4 = 8,192 Bytes = 8KB shared-memory/block
 
+    Each SM has 100KB, ceil(100KB/8KB) = 12 blocks/SM
 
-
-
-
+    Answer: No, occupancy is not limited by max shared-memory/SM
 
     (c) Is occupancy limited by the max registers/SM?
+    Each SM has 64K registers = 65,536 registers/SM
+    When i run "nvcc -c --ptxas-options="-v" kernel.cu", I find that kernel used 30 registers/thread.
+    Each block has 32×32 = 1,024 threads/block, we have:
+    - 1024*30=30,720 registers/block
+    - ceil(65,536​/30,720) = 2 blocks/SM
+
+    but from (a), what we need is 1 block/SM, and registers allow up to 2 blocks/SM.
+
+    Answer: occupancy is not limited by max registers/SM
+
+
 
 
 
