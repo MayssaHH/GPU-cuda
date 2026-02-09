@@ -70,7 +70,7 @@ void mm_gpu(float* A, float* B, float* C, unsigned int M, unsigned int N, unsign
 
     cudaMemcpy(A_d, A, M*K*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(B_d, B, K*N*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(C_d, C, M*N*sizeof(float), cudaMemcpyHostToDevice);
+
 
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
