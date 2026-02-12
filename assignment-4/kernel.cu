@@ -49,65 +49,10 @@ void copyFilterToGPU(float filter[][FILTER_DIM]) {
 
 void convolution_tiled_gpu(float* input_d, float* output_d, unsigned int width, unsigned int height) {
 
-    float elapsedTime;
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    // Allocate GPU memory
-    cudaEventRecord(start);
-    float *input_d;
-    cudaMalloc((void**)&input_d, width*height*sizeof(float));
-    cudaMalloc((void**)&output_d, width*height*sizeof(float));
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&elapsedTime, start, stop);
-    printf("Allocation time: %.3f ms\n", elapsedTime);
-
-    // Copy data to GPU
-    cudaEventRecord(start);
-
-    cudaMemcpy(input_d, input, width*height*sizeof(float), cudaMemcpyHostToDevice);
-    copyFilterToGPU(filter_c);
-
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&elapsedTime, start, stop);
-    printf("Copy to GPU time: %.3f ms\n", elapsedTime);
-
     // Call kernel
     dim3 numThreadsPerBlock(IN_TILE_DIM, IN_TILE_DIM);
     dim3 numBlocks((width + IN_TILE_DIM - 1)/IN_TILE_DIM, (height + IN_TILE_DIM - 1)/IN_TILE_DIM);
 
     convolution_tiled_kernel <<< numBlocks, numThreadsPerBlock >>> (input_d, output_d, width, height);
-
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&elapsedTime, start, stop);
-    printf("\033[1;32mKernel time: %.3f ms\033[0m\n", elapsedTime);
-
-    // Copy data from GPU
-    cudaEventRecord(start);
-    cudaMemcpy(C, C_d, M*N*sizeof(float), cudaMemcpyDeviceToHost);
-
-
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&elapsedTime, start, stop);
-    printf("Copy from GPU time: %.3f ms\n", elapsedTime);
-
-    // Free GPU memory
-    cudaEventRecord(start);
-
-    cudaFree(input_d);
-    cudaFree(output_d);
-
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&elapsedTime, start, stop);
-    printf("Deallocation time: %.3f ms\n", elapsedTime);
-
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
 }
 
