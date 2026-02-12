@@ -26,8 +26,8 @@ __global__ void convolution_tiled_kernel(float* input, float* output, unsigned i
     }
     __syncthreads();
     
-    // Now in the input tile, only center threads participate in the convolution
-    if (threadIdx.x >= FILTER_RADIUS && threadIdx.x < OUT_TILE_DIM - FILTER_RADIUS && threadIdx.y >= FILTER_RADIUS && threadIdx.y < OUT_TILE_DIM - FILTER_RADIUS) {
+    // Each thread in [0, OUT_TILE_DIM) x [0, OUT_TILE_DIM) computes one output using the loaded tile 
+    if (threadIdx.x < OUT_TILE_DIM && threadIdx.y < OUT_TILE_DIM) {
         int outRow = blockIdx.y*OUT_TILE_DIM + threadIdx.y;
         int outCol = blockIdx.x*OUT_TILE_DIM + threadIdx.x;
         float sum = 0.0f;
