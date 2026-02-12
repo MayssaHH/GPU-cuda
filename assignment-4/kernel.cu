@@ -51,7 +51,7 @@ void convolution_tiled_gpu(float* input_d, float* output_d, unsigned int width, 
 
     // Call kernel
     dim3 numThreadsPerBlock(IN_TILE_DIM, IN_TILE_DIM);
-    dim3 numBlocks((width + IN_TILE_DIM - 1)/IN_TILE_DIM, (height + IN_TILE_DIM - 1)/IN_TILE_DIM);
+    dim3 numBlocks((width + OUT_TILE_DIM - 1)/OUT_TILE_DIM, (height + OUT_TILE_DIM - 1)/OUT_TILE_DIM);
 
     convolution_tiled_kernel <<< numBlocks, numThreadsPerBlock >>> (input_d, output_d, width, height);
 }
