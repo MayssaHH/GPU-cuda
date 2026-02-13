@@ -3,21 +3,38 @@
     4096x4096 input using a 5x5 filter and a 32x32 input tile.
 
     (a) What are the dimensions of the output tile?
-
-        
+    dimension of output tile = input tile dimension - 2 * filter radius
+                             = 32 - 2 * 2
+                             = 28 
+    So, output tile is 28x28
 
     (b) What is the total number of ghost cells for the entire input?
-
+    We know that each block loads a 32×32 input tile into shared memory, however only a 28×28 interior of that tile corresponds to output
+    The remaining cells are ghost cells, now i want to find their total number for the entire input
+    Since input tile is 32x32 and output tile is 28x28, we have for each tile 32^2 - 28^2 = 240 ghost cells
+    Now, how many tiles we have? It's size of output / 28 
+    Size of ouput is 4092x4092 (input - 2*padding)
+    Number of tiles is output size / tile size = ceil(4092/28) = 147x147 = 21609 tiles
+    Total ghost cells = 21609 * 240 = 5,186,160
         
 
 (2) Assume we used a rectangular 5x7 filter instead. The convolution is still
     performed on a 4096x4096 input using a 32x32 input tile.
 
     (a) What are the dimensions of the output tile?
-
-        
+    dimension of output tile = input tile dimension - 2 * filter radius
+                             = (32,32) - 2 * (2,3)
+                             = (28,26)
+    So, output tile is 28x26 
 
     (b) What is the total number of ghost cells for the entire input?
-
+    We know that each block loads a 32×32 input tile into shared memory, however only a 28×26 interior of that tile corresponds to output
+    The remaining cells are ghost cells, now i want to find their total number for the entire input
+    Since input tile is 32x32 and output tile is 28x26, we have for each tile 32^2 - 28*26 = 296 ghost cells
+    Now, how many tiles we have?
+    output is (4096 - 4, 4096 - 6) = (4092,4090)
+    in one dimension we need 4092/28 = 147 tiles and in one dimension we need 4090/26 = 158 tiles
+    so we have 23,226 tiles 
+    Total ghost cells = 23,226 * 296 = 6,874,896 
         
 
