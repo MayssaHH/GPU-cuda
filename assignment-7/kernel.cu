@@ -4,9 +4,11 @@
 
 
 __global__ void scan_kernel(float* input, float* output, unsigned int N) {
+    // shared memory to store intermediate results  
     __shared__ float buffer[2*BLOCK_DIM];
     // For the reduction tree, we assign one thread for each pair of elements in the block.
     unsigned int i = blockIdx.x * 2*blockDim.x + threadIdx.x;
+    // Load data into shared memory
     if(i < N) {
         buffer[threadIdx.x] = input[i];
     }
@@ -23,6 +25,7 @@ __global__ void scan_kernel(float* input, float* output, unsigned int N) {
     
     __syncthreads();
 
+    // Reduction tree
     for(unsigned int stride = 1; stride < 2*blockDim.x; stride *= 2) {
         int offset = 2*stride*threadIdx.x;
         if(offset + stride < 2*blockDim.x && offset + 2*stride - 1 < 2*blockDim.x) {
@@ -34,8 +37,8 @@ __global__ void scan_kernel(float* input, float* output, unsigned int N) {
     if(threadIdx.x == 0) {
         buffer[2*blockDim.x - 1] = 0.0f;
     }
-
-    for(unsigned int stride = blockDim.x; stride > 1; stride /= 2) {
+    // post-reduction stage
+    for(unsigned int stride = blockDim.x; stride > 0; stride /= 2) {
         int offset = 2*stride*threadIdx.x;
         if(offset + stride < 2*blockDim.x && offset + 2*stride - 1 < 2*blockDim.x) {
             float temp = buffer[offset + stride - 1];
